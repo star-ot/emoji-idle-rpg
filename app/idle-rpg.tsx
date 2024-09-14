@@ -3,16 +3,17 @@ import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import { AlertCircle, Sword, Zap, Trash2 } from "lucide-react"
-import { CharacterStats } from './CharacterStats'
-import { Combat } from './Combat'
-import { Upgrades } from './Upgrades'
-import { ShopAndInventory } from './ShopAndInventory'
-import { FloorInfo } from './FloorInfo'
-import { Footer } from './Footer'
-import { useGameState, Stat } from './useGameState'
-import { useCombatSystem } from './useCombatSystem'
-import { useFloorSystem } from './useFloorSystem'
-import { useAutoUpgrade } from './useAutoUpgrade'
+import { CharacterStats } from '@/components/CharacterStats'
+import { Combat } from '@/components/Combat'
+import { Upgrades } from '@/components/Upgrades'
+import { ShopAndInventory } from '@/components/ShopAndInventory'
+import { FloorInfo } from '@/components/FloorInfo'
+import { Footer } from '@/components/Footer'
+import { FooterAd } from '@/components/FooterAd'
+import { useGameState, Stat } from '@/components/useGameState'
+import { useCombatSystem } from '@/components/useCombatSystem'
+import { useFloorSystem } from '@/components/useFloorSystem'
+import { useAutoUpgrade } from '@/components/useAutoUpgrade'
 
 export function IdleRpg() {
   const gameState = useGameState()
@@ -115,6 +116,7 @@ export function IdleRpg() {
               earnGold={gameState.earnGold}
               heal={gameState.heal}
               removeFromInventory={gameState.removeFromInventory}
+              addToInventory={gameState.addToInventory}
               getPotionCost={getPotionCost}
               setMessage={setMessage}
             />
@@ -178,9 +180,7 @@ export function IdleRpg() {
           <Footer />
         </div>
       </div>
-      <div className="h-32 bg-gray-800 mt-4 flex items-center justify-center">
-        <p className="text-sm text-gray-400">Advertisement Space</p>
-      </div>
+      <FooterAd />
     </div>
   )
 }

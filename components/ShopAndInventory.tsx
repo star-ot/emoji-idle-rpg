@@ -9,6 +9,7 @@ type ShopAndInventoryProps = {
     earnGold: (amount: number) => void
     heal: (amount: number) => void
     removeFromInventory: (item: string, amount: number) => void
+    addToInventory: (item: string, amount: number) => void
     getPotionCost: () => number
     setMessage: (message: string) => void
 }
@@ -19,6 +20,7 @@ export function ShopAndInventory({
     earnGold,
     heal,
     removeFromInventory,
+    addToInventory,
     getPotionCost,
     setMessage
 }: ShopAndInventoryProps) {
@@ -26,6 +28,7 @@ export function ShopAndInventory({
         const cost = getPotionCost()
         if (character.gold >= cost) {
             earnGold(-cost)
+            addToInventory('healingPotions', 1)
             setMessage("Bought a healing potion!")
         } else {
             setMessage("Not enough gold to buy a potion!")
