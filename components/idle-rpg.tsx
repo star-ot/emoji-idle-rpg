@@ -7,15 +7,15 @@ import { Badge } from "@/components/ui/badge"
 import { AlertCircle, Sword, Shield, Heart, Zap, Coins, Star, Trash2, TestTubeDiagonal } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
-interface Character {
+type Character = {
   level: number
   xp: number
   xpToNextLevel: number
-  attack: number
   defense: number
   health: number
   maxHealth: number
   gold: number
+  attack: number
 }
 
 interface Enemy {
@@ -24,10 +24,6 @@ interface Enemy {
   attack: number
   goldReward: number
   xpReward: number
-}
-
-interface Inventory {
-  healingPotions: number
 }
 
 interface GameState {
@@ -42,7 +38,7 @@ interface GameState {
   enemiesDefeated: number
   setEnemiesDefeated: React.Dispatch<React.SetStateAction<number>>
   inventory: Inventory
-  upgradeCharacter: (stat: string) => void
+  upgradeCharacter: (stat: Stat) => void
   earnGold: (amount: number) => void
   heal: (amount: number) => void
   addToInventory: (item: string, amount: number) => void
@@ -51,40 +47,16 @@ interface GameState {
   deleteCharacter: () => void
 }
 
-interface CombatSystem {
-  character: Character
-  currentEnemy: Enemy | null
-  setCharacter: React.Dispatch<React.SetStateAction<Character>>
-  setCurrentEnemy: React.Dispatch<React.SetStateAction<Enemy | null>>
-  earnGold: (amount: number) => void
-  enemies: Enemy[]
-  setEnemies: React.Dispatch<React.SetStateAction<Enemy[]>>
-  enemiesDefeated: number
-  setEnemiesDefeated: React.Dispatch<React.SetStateAction<number>>
-  gainXP: (amount: number) => void
+type Stat = 'attack' | 'defense' | 'health'
+
+type Inventory = {
+  [key: string]: number;
 }
 
-interface Stat {
-  attack: number
-  defense: number
-  health: number
-}
+type Prev = Character
 
-interface FloorSystem {
-  currentFloor: number
-  setCurrentFloor: React.Dispatch<React.SetStateAction<number>>
-  setEnemies: React.Dispatch<React.SetStateAction<Enemy[]>>
-  setCurrentEnemy: React.Dispatch<React.SetStateAction<Enemy | null>>
-  setEnemiesDefeated: React.Dispatch<React.SetStateAction<number>>
-}
-
-interface Prev {
-  character: Character
-  upgradeCharacter: (stat: string) => void
-}
-
-function useGameState() {
-  const defaultData = {
+function useGameState(): GameState {
+  const defaultData: Character = {
     level: 1,
     xp: 0,
     xpToNextLevel: 100,
@@ -95,11 +67,10 @@ function useGameState() {
     gold: 0,
   }
 
-  const defaultInventory = { healingPotions: 0 }
+  const defaultInventory: Inventory = { healingPotions: 0 }
   const defaultFloor = 1
 
-  // Load character from localStorage
-  const [character, setCharacter] = useState(() => {
+  const [character, setCharacter] = useState<Character>(() => {
     if (typeof window !== 'undefined') {
       const savedCharacter = localStorage.getItem('idleRPGCharacter')
       return savedCharacter ? JSON.parse(savedCharacter) : defaultData
@@ -107,8 +78,7 @@ function useGameState() {
     return defaultData
   })
 
-  // Load currentFloor from localStorage
-  const [currentFloor, setCurrentFloor] = useState(() => {
+  const [currentFloor, setCurrentFloor] = useState<number>(() => {
     if (typeof window !== 'undefined') {
       const savedFloor = localStorage.getItem('idleRPGCurrentFloor')
       return savedFloor ? JSON.parse(savedFloor) : defaultFloor
@@ -116,8 +86,7 @@ function useGameState() {
     return defaultFloor
   })
 
-  // Load inventory from localStorage
-  const [inventory, setInventory] = useState(() => {
+  const [inventory, setInventory] = useState<Inventory>(() => {
     if (typeof window !== 'undefined') {
       const savedInventory = localStorage.getItem('idleRPGInventory')
       return savedInventory ? JSON.parse(savedInventory) : defaultInventory
@@ -125,27 +94,24 @@ function useGameState() {
     return defaultInventory
   })
 
-  const [enemies, setEnemies] = useState([])
-  const [currentEnemy, setCurrentEnemy] = useState(null)
-  const [enemiesDefeated, setEnemiesDefeated] = useState(0)
+  const [enemies, setEnemies] = useState<Enemy[]>([])
+  const [currentEnemy, setCurrentEnemy] = useState<Enemy | null>(null)
+  const [enemiesDefeated, setEnemiesDefeated] = useState<number>(0)
 
-  // Save character to localStorage
   useEffect(() => {
     localStorage.setItem('idleRPGCharacter', JSON.stringify(character))
   }, [character])
 
-  // Save currentFloor to localStorage
   useEffect(() => {
     localStorage.setItem('idleRPGCurrentFloor', JSON.stringify(currentFloor))
   }, [currentFloor])
 
-  // Save inventory to localStorage
   useEffect(() => {
     localStorage.setItem('idleRPGInventory', JSON.stringify(inventory))
   }, [inventory])
 
-  const upgradeCharacter = useCallback((stat) => {
-    setCharacter((prev) => {
+  const upgradeCharacter = useCallback((stat: Stat) => {
+    setCharacter((prev: Character) => {
       let upgradeCost
       if (stat === 'health') {
         upgradeCost = Math.floor(prev.maxHealth * 0.2)
@@ -171,33 +137,33 @@ function useGameState() {
     })
   }, [])
 
-  const earnGold = useCallback((amount) => {
-    setCharacter((prev) => ({ ...prev, gold: prev.gold + amount }))
+  const earnGold = useCallback((amount: number) => {
+    setCharacter((prev: Prev) => ({ ...prev, gold: prev.gold + amount }))
   }, [])
 
-  const heal = useCallback((amount) => {
-    setCharacter((prev) => ({
+  const heal = useCallback((amount: number) => {
+    setCharacter((prev: Prev) => ({
       ...prev,
       health: Math.min(prev.health + amount, prev.maxHealth),
     }))
   }, [])
 
-  const addToInventory = useCallback((item, amount) => {
-    setInventory((prev) => ({
+  const addToInventory = useCallback((item: string, amount: number) => {
+    setInventory((prev: Inventory) => ({
       ...prev,
-      [item]: (prev[item] || 0) + amount,
+      [item]: (prev[item] || 0) + amount
     }))
   }, [])
 
-  const removeFromInventory = useCallback((item, amount) => {
-    setInventory((prev) => ({
+  const removeFromInventory = useCallback((item: string, amount: number) => {
+    setInventory((prev: Inventory) => ({
       ...prev,
       [item]: Math.max((prev[item] || 0) - amount, 0),
     }))
   }, [])
 
-  const gainXP = useCallback((amount) => {
-    setCharacter((prev) => {
+  const gainXP = useCallback((amount: number) => {
+    setCharacter((prev: Prev) => {
       let newXP = prev.xp + amount
       let newLevel = prev.level
       let newXPToNextLevel = prev.xpToNextLevel
@@ -255,13 +221,28 @@ function useGameState() {
   }
 }
 
+type UseCombatSystemProps = {
+  character: Character;
+  currentEnemy: Enemy | null;
+  setCharacter: React.Dispatch<React.SetStateAction<Character>>;
+  setCurrentEnemy: React.Dispatch<React.SetStateAction<Enemy | null>>;
+  earnGold: (amount: number) => void;
+  enemies: Enemy[];
+  setEnemies: React.Dispatch<React.SetStateAction<Enemy[]>>;
+  enemiesDefeated: number;
+  setEnemiesDefeated: React.Dispatch<React.SetStateAction<number>>;
+  gainXP: (xp: number) => void; 
+};
 
-function useCombatSystem({ character, currentEnemy, setCharacter, setCurrentEnemy, earnGold, enemies, setEnemies, enemiesDefeated, setEnemiesDefeated, gainXP }) {
+function useCombatSystem({ character, currentEnemy, setCharacter, setCurrentEnemy, earnGold, enemies, setEnemies, enemiesDefeated, setEnemiesDefeated, gainXP }: UseCombatSystemProps) {
   const attack = useCallback(() => {
     if (!currentEnemy || character.health <= 0) return
+    if (enemiesDefeated >= 10) {
+      console.log("You have defeated 10 enemies! You are now a master!")
+    }
 
     const updatedEnemy = { ...currentEnemy, health: currentEnemy.health - character.attack }
-    
+
     if (updatedEnemy.health <= 0) {
       earnGold(currentEnemy.goldReward)
       gainXP(currentEnemy.xpReward)
@@ -283,7 +264,7 @@ function useCombatSystem({ character, currentEnemy, setCharacter, setCurrentEnem
   return { attack }
 }
 
-function useFloorSystem({ currentFloor, setCurrentFloor, setEnemies, setCurrentEnemy, setEnemiesDefeated }) {
+function useFloorSystem({ currentFloor, setCurrentFloor, setEnemies, setCurrentEnemy, setEnemiesDefeated }: GameState) {
   const generateEnemies = useCallback(() => {
     const enemyTypes = ['👾', '👹', '👻', '👽', '🤖', '🎃', '👿', '👺', '🧟', '🧛']
     const numEnemies = Math.floor(Math.random() * 3) + 3
@@ -314,10 +295,10 @@ function useFloorSystem({ currentFloor, setCurrentFloor, setEnemies, setCurrentE
   return { nextFloor, generateEnemies }
 }
 
-function useAutoUpgrade({ character, upgradeCharacter }) {
+function useAutoUpgrade({ character, upgradeCharacter }: GameState) {
   useEffect(() => {
     const autoUpgrade = setInterval(() => {
-      const stats = ['attack', 'defense', 'health']
+      const stats: Stat[] = ['attack', 'defense', 'health']
       const randomStat = stats[Math.floor(Math.random() * stats.length)]
       upgradeCharacter(randomStat)
     }, 10000)
@@ -332,13 +313,12 @@ export function IdleRpg() {
   const { nextFloor, generateEnemies } = useFloorSystem(gameState)
   useAutoUpgrade(gameState)
 
-  const [message, setMessage] = useState("")
-  const [showDamage, setShowDamage] = useState(false)
-  const [manualDamage, setManualDamage] = useState(0)
+  const [message, setMessage] = useState<string>("")
+  const [showDamage, setShowDamage] = useState<boolean>(false)
+  const [manualDamage, setManualDamage] = useState<number>(0)
 
   useEffect(() => {
     const gameLoop = setInterval(() => {
-      // CHECK HEALTH before attacking
       if (gameState.character.health <= 0) return
       attack()
       setShowDamage(true)
@@ -346,15 +326,15 @@ export function IdleRpg() {
     }, 1000)
 
     return () => clearInterval(gameLoop)
-  }, [attack])
+  }, [attack, gameState.character.health])
 
   useEffect(() => {
     if (gameState.enemies.length === 0 || (gameState.enemies.length < 3 && !gameState.currentEnemy)) {
       generateEnemies()
     }
-  }, [gameState.enemies, gameState.currentEnemy, generateEnemies])
+  }, [gameState.enemies.length, gameState.currentEnemy, generateEnemies])
 
-  const getUpgradeCost = (stat) => {
+  const getUpgradeCost = (stat: Stat) => {
     if (stat === 'health') {
       return Math.floor(gameState.character.maxHealth * 0.2)
     }
@@ -369,11 +349,6 @@ export function IdleRpg() {
   const nextFloorAttackRequirement = Math.floor(gameState.currentFloor * 5 * Math.pow(1.1, gameState.currentFloor - 1))
   const canProgressToNextFloor = gameState.character.attack >= nextFloorAttackRequirement
 
-  const addDebugGold = () => {
-    gameState.earnGold(1000)
-    setMessage("Added 1000 gold for debugging")
-  }
-
   const getPotionCost = () => {
     return Math.floor(gameState.character.maxHealth * 0.05)
   }
@@ -382,7 +357,6 @@ export function IdleRpg() {
     const cost = getPotionCost()
     if (gameState.character.gold >= cost) {
       gameState.earnGold(-cost)
-      gameState.addToInventory('healingPotions', 1)
       setMessage("Bought a healing potion!")
     } else {
       setMessage("Not enough gold to buy a potion!")
@@ -402,10 +376,13 @@ export function IdleRpg() {
   const handleManualAttack = () => {
     if (gameState.character.health > 0) {
       const damage = attack()
-      setManualDamage(damage)
-      setTimeout(() => setManualDamage(0), 500)
+      if (damage !== undefined) {
+        setManualDamage(damage)
+        setTimeout(() => setManualDamage(0), 500)
+      }
     }
   }
+
 
   const handleDeleteCharacter = () => {
     if (confirm("Are you sure you want to delete your character? This action cannot be undone.")) {
@@ -414,7 +391,6 @@ export function IdleRpg() {
     }
   }
 
-  // Make the message disappear after 5 seconds
   useEffect(() => {
     const timeout = setTimeout(() => setMessage(""), 5000)
     return () => clearTimeout(timeout)
@@ -424,7 +400,7 @@ export function IdleRpg() {
     <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-indigo-900 text-white p-2 overflow-hidden flex flex-col">
       <div className="flex-grow flex items-center justify-center">
         <div className="w-full max-w-7xl bg-black bg-opacity-50 rounded-xl shadow-2xl p-4 backdrop-blur-sm">
-          <motion.h1 
+          <motion.h1
             className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-center"
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -434,9 +410,9 @@ export function IdleRpg() {
               Emoji Idle RPG
             </span>
           </motion.h1>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <motion.div 
+            <motion.div
               className="md:col-span-2 bg-gradient-to-br from-blue-900 to-purple-900 rounded-lg p-4 shadow-lg relative overflow-hidden"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -471,91 +447,91 @@ export function IdleRpg() {
                   </div>
                 </div>
                 <div className="relative mt-2">
-                  <Progress value={(gameState.character.health / gameState.character.maxHealth) * 100} className="mt-2 bg-green-900" indicatorClassName="bg-green-500" />
+                  <Progress value={(gameState.character.health / gameState.character.maxHealth) * 100} className="mt-2 bg-green-900"/>
                   {gameState.character.health <= 0 && (
-                    <div className="absolute top-8   left-0 w-full text-center text-xs text-red-500 font-bold">
-                      Incapacitated - Cannot Attack
-                    </div>
-                  )}
-                </div>
-                <Progress value={(gameState.character.xp / gameState.character.xpToNextLevel) * 100} className="mt-2 bg-purple-900" indicatorClassName="bg-purple-500" />
+                    <div className="absolute top-8 left-0 w-full text-center text-xs text-red-500 font-bold">
+                    Incapacitated - Cannot Attack
+                  </div>
+                )}
               </div>
-              <motion.div 
-                className="absolute top-0 left-0 w-full h-full bg-blue-500 opacity-10"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  rotate: [0, 90, 0],
-                }}
-                transition={{
-                  duration: 10,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                }}
-              />
-            </motion.div>
+              <Progress value={(gameState.character.xp / gameState.character.xpToNextLevel) * 100} className="mt-2 bg-purple-900"/>
+            </div>
+            <motion.div
+              className="absolute top-0 left-0 w-full h-full bg-blue-500 opacity-10"
+              animate={{
+                scale: [1, 1.2, 1],
+                rotate: [0, 90, 0],
+              }}
+              transition={{
+                duration: 10,
+                repeat: Infinity,
+                repeatType: "reverse",
+              }}
+            />
+          </motion.div>
 
-            <motion.div 
-              className="bg-gradient-to-br from-green-900 to-teal-900 rounded-lg p-4 shadow-lg relative overflow-hidden"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <div className="relative z-10">
-                <h2 className="text-xl font-semibold mb-2">Upgrades</h2>
-                <div className="grid grid-cols-1 gap-2">
-                  <Button onClick={() => gameState.upgradeCharacter('attack')} disabled={gameState.character.gold < getUpgradeCost('attack')} className="w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 transition-all duration-300 text-xs">
-                    <Sword className="mr-1 h-3 w-3" />
-                    Attack ({getUpgradeCost('attack')} gold)
-                  </Button>
-                  <Button onClick={() => gameState.upgradeCharacter('defense')} disabled={gameState.character.gold < getUpgradeCost('defense')} className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 transition-all duration-300 text-xs">
-                    <Shield className="mr-1 h-3 w-3" />
-                    Defense ({getUpgradeCost('defense')} gold)
-                  </Button>
-                  <Button onClick={() => gameState.upgradeCharacter('health')} disabled={gameState.character.gold < getUpgradeCost('health')} className="w-full bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 transition-all duration-300 text-xs">
-                    <Heart className="mr-1 h-3 w-3" />
-                    Health ({getUpgradeCost('health')} gold)
-                  </Button>
-                </div>
+          <motion.div
+            className="bg-gradient-to-br from-green-900 to-teal-900 rounded-lg p-4 shadow-lg relative overflow-hidden"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <div className="relative z-10">
+              <h2 className="text-xl font-semibold mb-2">Upgrades</h2>
+              <div className="grid grid-cols-1 gap-2">
+                <Button onClick={() => gameState.upgradeCharacter('attack')} disabled={gameState.character.gold < getUpgradeCost('attack')} className="w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 transition-all duration-300 text-xs">
+                  <Sword className="mr-1 h-3 w-3" />
+                  Attack ({getUpgradeCost('attack')} gold)
+                </Button>
+                <Button onClick={() => gameState.upgradeCharacter('defense')} disabled={gameState.character.gold < getUpgradeCost('defense')} className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 transition-all duration-300 text-xs">
+                  <Shield className="mr-1 h-3 w-3" />
+                  Defense ({getUpgradeCost('defense')} gold)
+                </Button>
+                <Button onClick={() => gameState.upgradeCharacter('health')} disabled={gameState.character.gold < getUpgradeCost('health')} className="w-full bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 transition-all duration-300 text-xs">
+                  <Heart className="mr-1 h-3 w-3" />
+                  Health ({getUpgradeCost('health')} gold)
+                </Button>
               </div>
-              <motion.div 
-                className="absolute top-0 left-0 w-full h-full bg-green-500 opacity-10"
-                animate={{
-                  scale: [1, 1.5, 1],
-                  rotate: [0, 180, 0],
-                }}
-                transition={{
-                  duration: 15,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                }}
-              />
-            </motion.div>
+            </div>
+            <motion.div
+              className="absolute top-0 left-0 w-full h-full bg-green-500 opacity-10"
+              animate={{
+                scale: [1, 1.5, 1],
+                rotate: [0, 180, 0],
+              }}
+              transition={{
+                duration: 15,
+                repeat: Infinity,
+                repeatType: "reverse",
+              }}
+            />
+          </motion.div>
 
-            <motion.div 
-              className="md:col-span-2 bg-gradient-to-br from-orange-900 to-red-900 rounded-lg p-4 shadow-lg relative overflow-hidden"
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="relative z-10">
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-xl font-semibold">Floor: {gameState.currentFloor}</h2>
-                  <div className="text-s">Next Floor Requires: {nextFloorAttackRequirement} Attack</div>
-                </div>
-                <AnimatePresence mode="wait">
-                  {gameState.currentEnemy ? (
-                    <motion.div
-                      key={gameState.currentEnemy.type}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.3 }}
-                      className="relative"
-                    >
-                      <div className="text-5xl mb-2 text-center">{gameState.currentEnemy.type}</div>
-                      <div className="text-xs mb-1">Health: {gameState.currentEnemy.health}</div>
-                      <div className="text-xs mb-1">Attack: {gameState.currentEnemy.attack}</div>
-                      <Progress value={(gameState.currentEnemy.health / (gameState.currentFloor * 50 * Math.pow(1.05, gameState.currentFloor))) * 100} className="mt-1 bg-red-900" indicatorClassName="bg-red-500" />
+          <motion.div
+            className="md:col-span-2 bg-gradient-to-br from-orange-900 to-red-900 rounded-lg p-4 shadow-lg relative overflow-hidden"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <div className="relative z-10">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-xl font-semibold">Floor: {gameState.currentFloor}</h2>
+                <div className="text-s">Next Floor Requires: {nextFloorAttackRequirement} Attack</div>
+              </div>
+              <AnimatePresence mode="wait">
+                {gameState.currentEnemy ? (
+                  <motion.div
+                    key={gameState.currentEnemy.type}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    className="relative"
+                  >
+                    <div className="text-5xl mb-2 text-center">{gameState.currentEnemy.type}</div>
+                    <div className="text-xs mb-1">Health: {gameState.currentEnemy.health}</div>
+                    <div className="text-xs mb-1">Attack: {gameState.currentEnemy.attack}</div>
+                      <Progress value={(gameState.currentEnemy.health / (gameState.currentFloor * 50 * Math.pow(1.05, gameState.currentFloor))) * 100} className="mt-1 bg-red-900"/>
                       {(showDamage || manualDamage > 0) && (
                         <motion.div
                           className="text-red-500 font-bold text-2xl absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
@@ -573,7 +549,7 @@ export function IdleRpg() {
                 </AnimatePresence>
                 <div className="mt-2 text-xs">Enemies defeated: {gameState.enemiesDefeated}</div>
               </div>
-              <motion.div 
+              <motion.div
                 className="absolute top-0 left-0 w-full h-full bg-red-500 opacity-10"
                 animate={{
                   scale: [1, 1.3, 1],
@@ -587,7 +563,7 @@ export function IdleRpg() {
               />
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="bg-gradient-to-br from-purple-900 to-pink-900 rounded-lg p-4 shadow-lg relative overflow-hidden"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
@@ -610,7 +586,7 @@ export function IdleRpg() {
                   </div>
                 </div>
               </div>
-              <motion.div 
+              <motion.div
                 className="absolute top-0 left-0 w-full h-full bg-purple-500 opacity-10"
                 animate={{
                   scale: [1, 1.4, 1],
@@ -625,20 +601,21 @@ export function IdleRpg() {
             </motion.div>
           </div>
 
-          <motion.div 
+          <motion.div
             className="mt-4 flex flex-wrap justify-between gap-2"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <Button onClick={handleManualAttack} disabled={!gameState.currentEnemy || gameState.character.health <= 0} size="sm" className="text-lg bg-gradient-to-r from-yellow-600 to-yellow-800 hover:from-yellow-700 hover:to-yellow-900 transition-all duration-300">
-              <Sword className="mr-1 6-8 w-6" />
+              <Sword className="mr-1 h-6 w-6" />
               Attack
             </Button>
             <Button onClick={handleNextFloor} disabled={!canProgressToNextFloor} size="sm" className="text-lg bg-gradient-to-r from-cyan-600 to-cyan-800 hover:from-cyan-700 hover:to-cyan-900 transition-all duration-300">
-              <Zap className="mr-1 h-6 w-6" />
+            <Zap className="mr-1 h-6 w-6" />
               Next Floor
             </Button>
+            {/* Uncomment for debugging purpose */}
             {/* <Button onClick={addDebugGold} variant="outline" size="sm" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black transition-all duration-300">
               <Coins className="mr-1 h-3 w-3" />
               Debug: Add Gold
@@ -651,7 +628,7 @@ export function IdleRpg() {
 
           <AnimatePresence>
             {message && (
-              <motion.div 
+              <motion.div
                 className="mt-2 p-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-lg flex items-center text-xs"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -664,7 +641,7 @@ export function IdleRpg() {
             )}
           </AnimatePresence>
 
-          <motion.div 
+          <motion.div
             className="mt-2"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -685,7 +662,6 @@ export function IdleRpg() {
             </div>
           </motion.div>
           <div className='flex mt-4 justify-between'>
-            {/* copyright */}
             <p className="text-xs text-gray-400 mt-4">© 2024 StarVSK. All rights reserved.</p>
             <p className="text-xs text-gray-400 mt-4">Idle RPG Game v1.0</p>
           </div>
